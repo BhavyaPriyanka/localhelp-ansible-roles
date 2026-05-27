@@ -1,11 +1,14 @@
 [Unit]
-Description = Backend Service
+Description=LocalHelp Backend Service
+After=network.target
 
 [Service]
-User=expense
-Environment=DB_HOST="{{ DB_HOST }}"
-ExecStart=/bin/node /app/index.js
-SyslogIdentifier=backend
+User=localhelp
+WorkingDirectory=/app/localhelp-backend
+Environment=DB_HOST="db.localhelp.store"
+ExecStart=/usr/bin/java -jar /app/localhelp-backend/app.jar
+Restart=always
 
 [Install]
 WantedBy=multi-user.target
+EOF
