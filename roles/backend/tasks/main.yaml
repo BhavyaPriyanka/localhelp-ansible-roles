@@ -12,9 +12,9 @@
   - nodejs
   - mysql
 
-- name: create expense user
+- name: create localhelp user
   ansible.builtin.user:
-    name: expense
+    name: localhelp
 
 - name: run app pre-requisites
   tags:
