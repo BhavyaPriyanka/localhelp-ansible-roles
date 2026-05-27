@@ -1,7 +1,8 @@
 - name: configure DB server
   hosts: db
-  vars_files:
-  - credentials.yaml
+  vars:
+    login_user: root
+    login_password: localhelp
   become: yes
   roles:
   - db
