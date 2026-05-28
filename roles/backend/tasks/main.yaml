@@ -30,12 +30,19 @@
     state: directory
     owner: localhelp
     group: localhelp
-    mode: '0755'
+    mode: "0755"
 
 - name: run app pre-requisites
   ansible.builtin.import_role:
     name: common
     tasks_from: app-pre-req
+
+- name: clone backend repo
+  ansible.builtin.git:
+    repo: "https://github.com/sbp828/localhelp-backend.git"
+    dest: /app
+    version: main
+    force: yes
 
 - name: build springboot app
   ansible.builtin.command: mvn clean package
@@ -46,7 +53,7 @@
   ansible.builtin.template:
     src: backend.service.j2
     dest: /etc/systemd/system/backend.service
-    mode: '0644'
+    mode: "0644"
 
 - name: daemon reload
   ansible.builtin.systemd:
