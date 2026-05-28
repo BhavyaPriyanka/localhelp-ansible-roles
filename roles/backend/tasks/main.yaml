@@ -1,14 +1,35 @@
-- name: install java and mysql client
+- name: install base packages
   ansible.builtin.dnf:
     name:
-      - java-17-openjdk
+      - java-17-amazon-corretto
       - maven
-      - mysql
+      - python3-pip
     state: present
+
+- name: install mysql client (MariaDB compatible for AWS Linux)
+  ansible.builtin.dnf:
+    name:
+      - mariadb105
+    state: present
+
+- name: install python dependencies for mysql module
+  ansible.builtin.pip:
+    name:
+      - PyMySQL
+      - cryptography
+    executable: pip3
 
 - name: create localhelp user
   ansible.builtin.user:
     name: localhelp
+
+- name: create app directory
+  ansible.builtin.file:
+    path: /app
+    state: directory
+    owner: localhelp
+    group: localhelp
+    mode: '0755'
 
 - name: run app pre-requisites
   ansible.builtin.import_role:
@@ -20,17 +41,21 @@
   args:
     chdir: /app
 
-- name: copy backend service
+- name: copy backend service file
   ansible.builtin.template:
     src: backend.service.j2
     dest: /etc/systemd/system/backend.service
+    mode: '0644'
 
-- name: install python mysql dependencies
-  ansible.builtin.pip:
-    name:
-      - PyMySQL
-      - cryptography
-    executable: pip3
+- name: daemon reload
+  ansible.builtin.systemd:
+    daemon_reload: true
+
+- name: start backend service
+  ansible.builtin.systemd:
+    name: backend
+    state: restarted
+    enabled: true
 
 - name: import data into mysql
   community.mysql.mysql_db:
@@ -40,13 +65,3 @@
     target: /app/schema/backend.sql
     state: import
     name: all
-
-- name: daemon reload
-  ansible.builtin.systemd_service:
-    daemon_reload: true
-
-- name: start backend service
-  ansible.builtin.service:
-    name: backend
-    state: restarted
-    enabled: yes
