@@ -1,6 +1,7 @@
 - name: install base packages
   ansible.builtin.dnf:
     name:
+      - git
       - java-17-amazon-corretto
       - maven
       - python3-pip
