@@ -1,6 +1,2 @@
-login_user: root
-login_host: db.localhelp.store
-login_password: localhelp
-DB_HOST: db.localhelp.store
 app_location: /app
 component: backend
