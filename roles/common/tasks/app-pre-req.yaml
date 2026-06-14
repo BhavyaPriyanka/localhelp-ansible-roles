@@ -59,10 +59,8 @@
     enabled: true
 
 - name: import mysql data
-  community.mysql.mysql_db:
-    login_user: "{{ login_user }}"
-    login_password: "{{ login_password }}"
-    login_host: "{{ login_host }}"
-    target: /app/schema/backend.sql
-    state: import
-    name: all
+  ansible.builtin.shell: |
+    mysql -h {{ login_host }} \
+          -u {{ login_user }} \
+          -p"{{ login_password }}" \
+          < /app/schema/backend.sql
