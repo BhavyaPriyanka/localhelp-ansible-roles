@@ -1,4 +1,3 @@
----
 - name: install base packages
   ansible.builtin.dnf:
     name:
