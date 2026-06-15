@@ -56,9 +56,12 @@
     login_user: "{{ login_user }}"
     login_password: "{{ login_password }}"
     login_host: "{{ login_host }}"
-    target: "/opt/localhelp/backend/db/backend.sql"
+    target: "/opt/localhelp/backend/db/init.sql"
     state: import
     name: all
+
+- name: fix ownership
+  ansible.builtin.command: chown -R localhelp:localhelp /opt/localhelp
 
 - name: deploy systemd service
   ansible.builtin.template:
