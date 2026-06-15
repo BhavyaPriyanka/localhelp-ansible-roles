@@ -24,6 +24,7 @@
     path: /opt/localhelp/backend
     state: absent
 
+
 - name: recreate app directory
   ansible.builtin.file:
     path: /opt/localhelp/backend
@@ -38,6 +39,8 @@
     dest: /opt/localhelp/backend
     version: main
     force: true
+    update: true
+    accept_hostkey: true
 
 - name: build springboot application
   ansible.builtin.command: mvn clean package -DskipTests
