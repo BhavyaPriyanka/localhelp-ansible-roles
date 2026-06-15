@@ -1,6 +1,7 @@
 ---
 - name: Backend Deployment - LocalHelp
-  hosts: backend
+  hosts: localhost
+  connection: local
   become: true
 
   vars:
