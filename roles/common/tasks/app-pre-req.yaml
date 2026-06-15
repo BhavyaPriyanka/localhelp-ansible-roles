@@ -1,3 +1,4 @@
+---
 - name: ensure clean app directory
   ansible.builtin.file:
     path: /app
@@ -28,31 +29,39 @@
       - cryptography
     executable: pip3
 
-- name: clone backend repo (FRESH CLONE ONLY)
+- name: clone backend repo (fresh clone)
   ansible.builtin.git:
     repo: "https://github.com/sbp828/localhelp-backend.git"
     dest: /app
     version: main
     force: yes
-    update: no
-    remote: origin
+    update: yes
 
-- name: build springboot app
-  ansible.builtin.command: mvn clean package
+- name: build springboot application
+  ansible.builtin.command: mvn clean package -DskipTests
   args:
     chdir: /app
 
-- name: copy systemd service
+- name: ensure target jar exists
+  ansible.builtin.shell: ls -l /app/target/*.jar
+  register: jar_check
+  changed_when: false
+
+- name: set correct jar path fact
+  ansible.builtin.set_fact:
+    app_jar: "{{ lookup('pipe', 'ls /app/target/*.jar') }}"
+
+- name: copy systemd service file
   ansible.builtin.template:
     src: backend.service.j2
     dest: /etc/systemd/system/backend.service
     mode: "0644"
 
-- name: daemon reload
+- name: reload systemd daemon
   ansible.builtin.systemd:
     daemon_reload: true
 
-- name: start backend service
+- name: enable and restart backend service
   ansible.builtin.systemd:
     name: backend
     state: restarted
@@ -63,4 +72,4 @@
     mysql -h {{ login_host }} \
           -u {{ login_user }} \
           -p"{{ login_password }}" \
-          < /app/schema/backend.sql
+          < /app/db/backend.sql

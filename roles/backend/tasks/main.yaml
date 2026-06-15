@@ -1,75 +1,90 @@
-- name: install base packages
-  ansible.builtin.dnf:
-    name:
-      - git
-      - java-17-amazon-corretto
-      - maven
-      - python3-pip
-    state: present
+---
+- name: Backend Deployment - LocalHelp
+  hosts: backend
+  become: true
 
-- name: install mysql client (MariaDB compatible for AWS Linux)
-  ansible.builtin.dnf:
-    name:
-      - mariadb105
-    state: present
+  vars:
+    app_dir: /app
+    service_name: backend
 
-- name: install python dependencies for mysql module
-  ansible.builtin.pip:
-    name:
-      - PyMySQL
-      - cryptography
-    executable: pip3
+  tasks:
 
-- name: create localhelp user
-  ansible.builtin.user:
-    name: localhelp
+    - name: install base packages
+      ansible.builtin.dnf:
+        name:
+          - git
+          - java-17-amazon-corretto
+          - maven
+          - python3-pip
+          - mariadb105
+        state: present
 
-- name: create app directory
-  ansible.builtin.file:
-    path: /app
-    state: directory
-    owner: localhelp
-    group: localhelp
-    mode: "0755"
+    - name: install python dependencies for mysql module
+      ansible.builtin.pip:
+        name:
+          - PyMySQL
+          - cryptography
+        executable: pip3
 
-- name: run app pre-requisites
-  ansible.builtin.import_role:
-    name: common
-    tasks_from: app-pre-req
+    - name: ensure localhelp user exists
+      ansible.builtin.user:
+        name: localhelp
 
-- name: clone backend repo
-  ansible.builtin.git:
-    repo: "https://github.com/sbp828/localhelp-backend.git"
-    dest: /app
-    version: main
-    force: yes
+    - name: clean app directory
+      ansible.builtin.file:
+        path: "{{ app_dir }}"
+        state: absent
 
-- name: build springboot app
-  ansible.builtin.command: mvn clean package
-  args:
-    chdir: /app
+    - name: recreate app directory
+      ansible.builtin.file:
+        path: "{{ app_dir }}"
+        state: directory
+        owner: localhelp
+        group: localhelp
+        mode: "0755"
 
-- name: copy backend service file
-  ansible.builtin.template:
-    src: backend.service.j2
-    dest: /etc/systemd/system/backend.service
-    mode: "0644"
+    - name: clone backend repo
+      ansible.builtin.git:
+        repo: "https://github.com/sbp828/localhelp-backend.git"
+        dest: "{{ app_dir }}"
+        version: main
+        force: yes
 
-- name: daemon reload
-  ansible.builtin.systemd:
-    daemon_reload: true
+    - name: build springboot application
+      ansible.builtin.command: mvn clean package -DskipTests
+      args:
+        chdir: "{{ app_dir }}"
 
-- name: start backend service
-  ansible.builtin.systemd:
-    name: backend
-    state: restarted
-    enabled: true
+    - name: find built jar
+      ansible.builtin.shell: ls {{ app_dir }}/target/*.jar
+      register: jar_path
+      changed_when: false
 
-- name: import data into mysql
-  community.mysql.mysql_db:
-    login_user: "{{ login_user }}"
-    login_password: "{{ login_password }}"
-    login_host: "{{ login_host }}"
-    target: /app/schema/backend.sql
-    state: import
-    name: all
+    - name: set jar fact
+      ansible.builtin.set_fact:
+        app_jar: "{{ jar_path.stdout }}"
+
+    - name: import database schema
+      community.mysql.mysql_db:
+        login_user: "{{ login_user }}"
+        login_password: "{{ login_password }}"
+        login_host: "{{ login_host }}"
+        target: "{{ app_dir }}/db/backend.sql"
+        state: import
+        name: all
+
+    - name: deploy systemd service
+      ansible.builtin.template:
+        src: backend.service.j2
+        dest: /etc/systemd/system/backend.service
+        mode: "0644"
+
+    - name: reload systemd
+      ansible.builtin.systemd:
+        daemon_reload: true
+
+    - name: start backend service
+      ansible.builtin.systemd:
+        name: backend
+        state: restarted
+        enabled: true
