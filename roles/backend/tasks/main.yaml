@@ -1,91 +1,80 @@
 ---
-- name: Backend Deployment - LocalHelp
-  hosts: localhost
-  connection: local
-  become: true
+- name: install base packages
+  ansible.builtin.dnf:
+    name:
+      - git
+      - java-17-amazon-corretto
+      - maven
+      - python3-pip
+      - mariadb105
+    state: present
 
-  vars:
-    app_dir: /app
-    service_name: backend
+- name: install python dependencies for mysql module
+  ansible.builtin.pip:
+    name:
+      - PyMySQL
+      - cryptography
+    executable: pip3
 
-  tasks:
+- name: ensure localhelp user exists
+  ansible.builtin.user:
+    name: localhelp
 
-    - name: install base packages
-      ansible.builtin.dnf:
-        name:
-          - git
-          - java-17-amazon-corretto
-          - maven
-          - python3-pip
-          - mariadb105
-        state: present
+- name: clean app directory
+  ansible.builtin.file:
+    path: "{{ app_dir }}"
+    state: absent
 
-    - name: install python dependencies for mysql module
-      ansible.builtin.pip:
-        name:
-          - PyMySQL
-          - cryptography
-        executable: pip3
+- name: recreate app directory
+  ansible.builtin.file:
+    path: "{{ app_dir }}"
+    state: directory
+    owner: localhelp
+    group: localhelp
+    mode: "0755"
 
-    - name: ensure localhelp user exists
-      ansible.builtin.user:
-        name: localhelp
+- name: clone backend repo
+  ansible.builtin.git:
+    repo: "https://github.com/sbp828/localhelp-backend.git"
+    dest: "{{ app_dir }}"
+    version: main
+    force: true
 
-    - name: clean app directory
-      ansible.builtin.file:
-        path: "{{ app_dir }}"
-        state: absent
+- name: build springboot application
+  ansible.builtin.command: mvn clean package -DskipTests
+  args:
+    chdir: "{{ app_dir }}"
 
-    - name: recreate app directory
-      ansible.builtin.file:
-        path: "{{ app_dir }}"
-        state: directory
-        owner: localhelp
-        group: localhelp
-        mode: "0755"
+- name: find built jar
+  ansible.builtin.shell: ls {{ app_dir }}/target/*.jar
+  register: jar_path
+  changed_when: false
 
-    - name: clone backend repo
-      ansible.builtin.git:
-        repo: "https://github.com/sbp828/localhelp-backend.git"
-        dest: "{{ app_dir }}"
-        version: main
-        force: yes
+- name: set jar fact
+  ansible.builtin.set_fact:
+    app_jar: "{{ jar_path.stdout }}"
 
-    - name: build springboot application
-      ansible.builtin.command: mvn clean package -DskipTests
-      args:
-        chdir: "{{ app_dir }}"
+- name: import database schema
+  community.mysql.mysql_db:
+    login_user: "{{ login_user }}"
+    login_password: "{{ login_password }}"
+    login_host: "{{ login_host }}"
+    target: "{{ app_dir }}/db/backend.sql"
+    state: import
+    name: all
 
-    - name: find built jar
-      ansible.builtin.shell: ls {{ app_dir }}/target/*.jar
-      register: jar_path
-      changed_when: false
+- name: deploy systemd service
+  ansible.builtin.template:
+    src: backend.service.j2
+    dest: /etc/systemd/system/backend.service
+    mode: "0644"
 
-    - name: set jar fact
-      ansible.builtin.set_fact:
-        app_jar: "{{ jar_path.stdout }}"
+- name: reload systemd
+  ansible.builtin.systemd:
+    daemon_reload: true
 
-    - name: import database schema
-      community.mysql.mysql_db:
-        login_user: "{{ login_user }}"
-        login_password: "{{ login_password }}"
-        login_host: "{{ login_host }}"
-        target: "{{ app_dir }}/db/backend.sql"
-        state: import
-        name: all
-
-    - name: deploy systemd service
-      ansible.builtin.template:
-        src: backend.service.j2
-        dest: /etc/systemd/system/backend.service
-        mode: "0644"
-
-    - name: reload systemd
-      ansible.builtin.systemd:
-        daemon_reload: true
-
-    - name: start backend service
-      ansible.builtin.systemd:
-        name: backend
-        state: restarted
-        enabled: true
+- name: start backend service
+  ansible.builtin.systemd:
+    name: backend
+    state: restarted
+    enabled: true
