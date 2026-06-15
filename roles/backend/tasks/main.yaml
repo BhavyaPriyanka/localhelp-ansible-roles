@@ -51,6 +51,23 @@
   ansible.builtin.set_fact:
     app_jar: "{{ jar_path.stdout }}"
 
+- name: create runtime directory
+  ansible.builtin.file:
+    path: /app/localhelp-backend
+    state: directory
+    owner: localhelp
+    group: localhelp
+    mode: "0755"
+
+- name: copy jar to runtime location
+  ansible.builtin.copy:
+    src: "{{ app_jar }}"
+    dest: /app/localhelp-backend/app.jar
+    remote_src: true
+    owner: localhelp
+    group: localhelp
+    mode: "0755"
+
 - name: import database schema
   community.mysql.mysql_db:
     login_user: "{{ login_user }}"
