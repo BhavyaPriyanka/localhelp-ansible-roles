@@ -15,32 +15,27 @@
       - cryptography
     executable: pip3
 
-- name: ensure localhelp user exists
-  ansible.builtin.user:
-    name: localhelp
-
-- name: clean app directory
+- name: ensure parent directory exists
   ansible.builtin.file:
-    path: /opt/localhelp/backend
-    state: absent
-
-
-- name: recreate app directory
-  ansible.builtin.file:
-    path: /opt/localhelp/backend
+    path: /opt/localhelp
     state: directory
     owner: localhelp
     group: localhelp
     mode: "0755"
 
-- name: clone backend repo
+- name: force remove old repo
+  ansible.builtin.file:
+    path: /opt/localhelp/backend
+    state: absent
+
+- name: clone backend repo (clean)
   ansible.builtin.git:
     repo: "https://github.com/sbp828/localhelp-backend.git"
     dest: /opt/localhelp/backend
     version: main
     force: true
-    update: true
-    accept_hostkey: true
+    clone: true
+    update: false
 
 - name: build springboot application
   ansible.builtin.command: mvn clean package -DskipTests
