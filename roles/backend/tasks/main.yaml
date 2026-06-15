@@ -21,12 +21,12 @@
 
 - name: clean app directory
   ansible.builtin.file:
-    path: "{{ app_dir }}"
+    path: /opt/localhelp/backend
     state: absent
 
 - name: recreate app directory
   ansible.builtin.file:
-    path: "{{ app_dir }}"
+    path: /opt/localhelp/backend
     state: directory
     owner: localhelp
     group: localhelp
@@ -35,17 +35,17 @@
 - name: clone backend repo
   ansible.builtin.git:
     repo: "https://github.com/sbp828/localhelp-backend.git"
-    dest: "{{ app_dir }}"
+    dest: /opt/localhelp/backend
     version: main
     force: true
 
 - name: build springboot application
   ansible.builtin.command: mvn clean package -DskipTests
   args:
-    chdir: "{{ app_dir }}"
+    chdir: /opt/localhelp/backend
 
 - name: find built jar
-  ansible.builtin.shell: ls {{ app_dir }}/target/*.jar
+  ansible.builtin.shell: ls /opt/localhelp/backend/target/*.jar
   register: jar_path
   changed_when: false
 
@@ -58,7 +58,7 @@
     login_user: "{{ login_user }}"
     login_password: "{{ login_password }}"
     login_host: "{{ login_host }}"
-    target: "{{ app_dir }}/db/backend.sql"
+    target: "/opt/localhelp/backend/db/backend.sql"
     state: import
     name: all
 
