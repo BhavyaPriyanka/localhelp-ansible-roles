@@ -28,7 +28,7 @@
     state: directory
     mode: "0755"
 
-- name: fix ownership for app directory
+- name: set ownership for base directory
   ansible.builtin.file:
     path: /opt/localhelp
     owner: localhelp
