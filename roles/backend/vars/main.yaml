@@ -1,6 +1,6 @@
 app_location: /app
 component: backend\
 login_user: root
-login_host: db-dev.localhelp.store
+login_host: localhost
 login_password: localhelp
 DB_HOST: db-dev.localhelp.store
