@@ -77,6 +77,12 @@
     state: import
     name: all
 
+- name: create localhelp user
+  ansible.builtin.user:
+    name: localhelp
+    system: yes
+    create_home: yes
+
 - name: fix ownership
   ansible.builtin.command: chown -R localhelp:localhelp /opt/localhelp
 
