@@ -1,5 +1,5 @@
 app_location: /app
-component: backend\
+component: backend
 login_user: root
 login_host: localhost
 login_password: localhelp
