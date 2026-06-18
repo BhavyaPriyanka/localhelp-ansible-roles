@@ -39,8 +39,9 @@
     path: /opt/localhelp/backend
     state: absent
 
-- name: clone backend repo
+- name: clone backend repo (as localhelp user)
   become: true
+  become_user: localhelp
   ansible.builtin.git:
     repo: https://github.com/sbp828/localhelp-backend.git
     dest: /opt/localhelp/backend
