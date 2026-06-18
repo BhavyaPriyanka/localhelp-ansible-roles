@@ -38,7 +38,7 @@
   ansible.builtin.file:
     path: /opt/localhelp/backend
     state: absent
-    
+
 - name: clone backend repo (as localhelp user)
   become: true
   become_user: localhelp
@@ -47,14 +47,6 @@
     dest: /opt/localhelp/backend
     version: main
     force: true
-
-- name: set repo ownership
-  become: true
-  ansible.builtin.file:
-    path: /opt/localhelp/backend
-    owner: localhelp
-    group: localhelp
-    recurse: true
 
 - name: build springboot application
   become: true
