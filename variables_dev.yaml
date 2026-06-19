@@ -2,3 +2,4 @@ login_user: root
 login_host: db-dev.localhelp.store
 login_password: localhelp
 DB_HOST: db-dev.localhelp.store
+BACKEND_API_URL: backend.app-dev.localhelp.store

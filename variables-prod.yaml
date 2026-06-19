@@ -1,4 +1,0 @@
-login_user: root
-login_host: db-prod.localhelp.store
-login_password: localhelp
-DB_HOST: db-prod.localhelp.store
