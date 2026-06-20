@@ -37,7 +37,7 @@
     var: app_location
 
 - name: verify build folder
-  ansible.builtin.command: ls -ლა {{ app_location }}/build
+  ansible.builtin.command: ls -la {{ app_location }}/build
   register: build_check
 
 - debug:
