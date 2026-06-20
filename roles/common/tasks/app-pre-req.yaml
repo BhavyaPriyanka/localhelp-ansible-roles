@@ -1,75 +1,16 @@
----
-- name: ensure clean app directory
+- name: delete app directory
   ansible.builtin.file:
-    path: /app
+    path: "{{ app_location }}"
     state: absent
+  #ignore_errors: yes
 
 - name: create app directory
   ansible.builtin.file:
-    path: /app
+    path: "{{ app_location }}"
     state: directory
-    owner: localhelp
-    group: localhelp
-    mode: "0755"
 
-- name: install base packages
-  ansible.builtin.dnf:
-    name:
-      - git
-      - java-17-amazon-corretto
-      - maven
-      - python3-pip
-      - mariadb105
-    state: present
-
-- name: install python mysql dependencies
-  ansible.builtin.pip:
-    name:
-      - PyMySQL
-      - cryptography
-    executable: pip3
-
-- name: clone backend repo (fresh clone)
+- name: download the code from github
   ansible.builtin.git:
-    repo: "https://github.com/sbp828/localhelp-backend.git"
-    dest: /app
-    version: main
-    force: yes
-    update: yes
-
-- name: build springboot application
-  ansible.builtin.command: mvn clean package -DskipTests
-  args:
-    chdir: /app
-
-- name: ensure target jar exists
-  ansible.builtin.shell: ls -l /app/target/*.jar
-  register: jar_check
-  changed_when: false
-
-- name: set correct jar path fact
-  ansible.builtin.set_fact:
-    app_jar: "{{ lookup('pipe', 'ls /app/target/*.jar') }}"
-
-- name: copy systemd service file
-  ansible.builtin.template:
-    src: backend.service.j2
-    dest: /etc/systemd/system/backend.service
-    mode: "0644"
-
-- name: reload systemd daemon
-  ansible.builtin.systemd:
-    daemon_reload: true
-
-- name: enable and restart backend service
-  ansible.builtin.systemd:
-    name: backend
-    state: restarted
-    enabled: true
-
-- name: import mysql data
-  ansible.builtin.shell: |
-    mysql -h {{ login_host }} \
-          -u {{ login_user }} \
-          -p"{{ login_password }}" \
-          < /app/db/backend.sql
+    src: "https://github.com/sbp828/localhelp-frontend"
+    dest: "{{ app_location }}"
+    remote_src: yes
