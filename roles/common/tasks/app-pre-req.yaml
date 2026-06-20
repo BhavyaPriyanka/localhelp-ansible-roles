@@ -2,17 +2,32 @@
   ansible.builtin.file:
     path: "{{ app_location }}"
     state: absent
-  #ignore_errors: yes
 
 - name: create app directory
   ansible.builtin.file:
     path: "{{ app_location }}"
     state: directory
 
-- name: download the code from github
+- name: clone repo
   ansible.builtin.git:
     repo: "https://github.com/sbp828/localhelp-frontend"
     dest: "{{ app_location }}"
     version: main
     force: yes
     update: yes
+
+- name: install dependencies
+  ansible.builtin.shell: npm install
+  args:
+    chdir: "{{ app_location }}"
+
+- name: build project
+  ansible.builtin.shell: npm run build
+  args:
+    chdir: "{{ app_location }}"
+
+- name: deploy to nginx
+  ansible.builtin.copy:
+    src: "{{ app_location }}/build/"
+    dest: /usr/share/nginx/html/
+    remote_src: yes
