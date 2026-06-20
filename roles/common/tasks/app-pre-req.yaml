@@ -16,13 +16,19 @@
     force: yes
     update: yes
 
+- name: install nodejs and npm
+  ansible.builtin.dnf:
+    name: nodejs
+    state: present
+  become: yes
+
 - name: install dependencies
-  ansible.builtin.shell: npm install
+  ansible.builtin.command: npm install
   args:
     chdir: "{{ app_location }}"
 
-- name: build project
-  ansible.builtin.shell: npm run build
+- name: build frontend
+  ansible.builtin.command: npm run build
   args:
     chdir: "{{ app_location }}"
 
