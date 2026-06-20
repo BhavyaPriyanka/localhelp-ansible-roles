@@ -11,6 +11,7 @@
 
 - name: download the code from github
   ansible.builtin.git:
-    src: "https://github.com/sbp828/localhelp-frontend"
+    repo: "https://github.com/sbp828/localhelp-frontend"
     dest: "{{ app_location }}"
     remote_src: yes
+    version: main
