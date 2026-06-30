@@ -47,7 +47,7 @@
 - name: clone backend repo
   become: true
   ansible.builtin.git:
-    repo: https://github.com/sbp828/localhelp-backend.git
+    repo: https://github.com/BhavyaPriyanka/localhelp-backend.git
     dest: /opt/localhelp/backend
     version: main
     force: true

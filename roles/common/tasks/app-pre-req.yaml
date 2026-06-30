@@ -10,7 +10,7 @@
 
 - name: clone repo
   ansible.builtin.git:
-    repo: "https://github.com/sbp828/localhelp-frontend"
+    repo: "https://github.com/BhavyaPriyanka/localhelp-frontend"
     dest: "{{ app_location }}"
     version: main
     force: yes
