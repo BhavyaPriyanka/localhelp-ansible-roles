@@ -38,7 +38,7 @@
 - name: download snapshot jar from nexus
   become: true
   ansible.builtin.get_url:
-    url: "http://{{ nexus_url }}/repository/{{ component }}/com/localhelp/{{ component }}/{{ app_version }}/{{ component }}-{{ app_version }}.jar"
+    url: "{{ nexus_url }}/repository/{{ component }}/com/localhelp/{{ component }}/{{ app_version }}/{{ component }}-{{ app_version }}.jar"
     dest: "/opt/localhelp/backend/app.jar"
     owner: localhelp
     group: localhelp
