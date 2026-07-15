@@ -4,3 +4,5 @@ login_user: root
 login_host: db-dev.localhelp.store
 login_password: localhelp
 DB_HOST: db-dev.localhelp.store
+app_version: 1.1.0-SNAPSHOT
+nexus_url: http://nexus.localhelp.store:8081

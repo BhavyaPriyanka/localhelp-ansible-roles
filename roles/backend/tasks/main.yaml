@@ -5,16 +5,16 @@
     system: true
     create_home: true
 
+
 - name: install base packages
   become: true
   ansible.builtin.dnf:
     name:
-      - git
       - java-17-amazon-corretto
-      - maven
       - python3-pip
       - mariadb105
     state: present
+
 
 - name: install python dependencies for mysql module
   become: true
@@ -24,83 +24,59 @@
       - cryptography
     executable: pip3
 
-- name: ensure parent directory exists
+
+- name: ensure application directory exists
   become: true
   ansible.builtin.file:
-    path: /opt/localhelp
+    path: /opt/localhelp/backend
     state: directory
     owner: localhelp
     group: localhelp
     mode: "0755"
 
-- name: remove old repo (clean slate)
+
+- name: download snapshot jar from nexus
   become: true
-  ansible.builtin.file:
-    path: /opt/localhelp/backend
-    state: absent
-
-- name: test clone without become at all
-  ansible.builtin.git:
-    repo: https://github.com/sbp828/localhelp-backend.git
-    dest: /tmp/backend
-
-- name: clone backend repo
-  become: true
-  ansible.builtin.git:
-    repo: https://github.com/BhavyaPriyanka/localhelp-backend.git
-    dest: /opt/localhelp/backend
-    version: main
-    force: true
-
-- name: fix repo ownership
-  become: true
-  ansible.builtin.file:
-    path: /opt/localhelp/backend
-    owner: localhelp
-    group: localhelp
-    recurse: true
-
-- name: build springboot application
-  become: true
-  ansible.builtin.command: mvn clean package -DskipTests
-  args:
-    chdir: /opt/localhelp/backend
-
-- name: find built jar
-  become: true
-  ansible.builtin.shell: |
-    find /opt/localhelp/backend/target \
-    -name "*.jar" ! -name "*.jar.original" | head -n 1
-  register: jar_path
-  changed_when: false
-
-- name: set jar fact
-  ansible.builtin.set_fact:
-    app_jar: "{{ jar_path.stdout }}"
-
-- name: copy jar to runtime location
-  become: true
-  ansible.builtin.copy:
-    src: "{{ app_jar }}"
-    dest: /opt/localhelp/backend/app.jar
-    remote_src: true
+  ansible.builtin.get_url:
+    url: "http://{{ nexus_url }}/repository/{{ component }}/com/localhelp/{{ component }}/{{ app_version }}/{{ component }}-{{ app_version }}.jar"
+    dest: "/opt/localhelp/backend/app.jar"
     owner: localhelp
     group: localhelp
     mode: "0644"
 
-- debug:
-    msg:
-      - "{{ login_host }}"
-      - "{{ login_user }}"
+
+- name: verify downloaded jar
+  become: true
+  ansible.builtin.command:
+    cmd: ls -lh /opt/localhelp/backend/app.jar
+  register: jar_check
+  changed_when: false
+
+
+- name: display jar details
+  ansible.builtin.debug:
+    msg: "{{ jar_check.stdout }}"
+
 
 - name: import database schema
+  become: true
   community.mysql.mysql_db:
     login_user: "{{ login_user }}"
     login_password: "{{ login_password }}"
     login_host: "{{ login_host }}"
-    target: /opt/localhelp/backend/db/init.sql
+    target: "{{ db_script_path }}"
     state: import
     name: all
+
+- name: copy database schema file
+  become: true
+  ansible.builtin.copy:
+    src: init.sql
+    dest: /opt/localhelp/backend/init.sql
+    owner: localhelp
+    group: localhelp
+    mode: "0644"
+
 
 - name: deploy systemd service
   become: true
@@ -109,10 +85,12 @@
     dest: /etc/systemd/system/backend.service
     mode: "0644"
 
-- name: reload systemd
+
+- name: reload systemd daemon
   become: true
   ansible.builtin.systemd:
     daemon_reload: true
+
 
 - name: restart backend service
   become: true
