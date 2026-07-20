@@ -1,28 +1,23 @@
-- name: install nginx server
+---
+- name: Install nginx
   ansible.builtin.dnf:
     name: nginx
-    state: latest
+    state: present
 
-- name: start and enable nginx
+- name: Start and enable nginx
   ansible.builtin.service:
     name: nginx
     state: started
     enabled: yes
 
-- name: run app pre-requisites
+- name: Deploy frontend application
   ansible.builtin.import_role:
     name: common
     tasks_from: app-pre-req
 
-# if there is change in configuration only, then you need to restart nginx
-- name: copy backend conf
+- name: Copy nginx configuration
   ansible.builtin.template:
     src: localhelp.conf.j2
     dest: /etc/nginx/default.d/localhelp.conf
   notify:
-  - restart nginx
-
-- name: restart nginx
-  ansible.builtin.service:
-    name: nginx
-    state: restarted
+    - restart nginx
