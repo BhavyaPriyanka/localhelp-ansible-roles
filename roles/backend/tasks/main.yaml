@@ -69,10 +69,9 @@
     msg: "{{ jar_check.stdout }}"
 
 
-- name: copy database schema file
-  become: true
-  ansible.builtin.copy:
-    src: init.sql
+- name: Download init.sql
+  get_url:
+    url: "{{ nexus_url }}/repository/backend/com/localhelp/backend/{{ app_version }}/init.sql"
     dest: /opt/localhelp/backend/init.sql
     owner: localhelp
     group: localhelp
