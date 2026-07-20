@@ -70,8 +70,9 @@
 
 
 - name: Download init.sql
-  get_url:
-    url: "{{ nexus_url }}/repository/backend/com/localhelp/backend/{{ app_version }}/init.sql"
+  become: true
+  ansible.builtin.get_url:
+    url: "{{ nexus_url }}/repository/{{ component }}/com/localhelp/{{ component }}/{{ app_version }}/{{ component }}-{{ snapshot_version }}-db.sql"
     dest: /opt/localhelp/backend/init.sql
     owner: localhelp
     group: localhelp
