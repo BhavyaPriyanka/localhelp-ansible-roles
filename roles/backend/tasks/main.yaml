@@ -69,16 +69,6 @@
     msg: "{{ jar_check.stdout }}"
 
 
-- name: import database schema
-  become: true
-  community.mysql.mysql_db:
-    login_user: "{{ login_user }}"
-    login_password: "{{ login_password }}"
-    login_host: "{{ login_host }}"
-    target: "{{ db_script_path }}"
-    state: import
-    name: all
-
 - name: copy database schema file
   become: true
   ansible.builtin.copy:
@@ -87,6 +77,16 @@
     owner: localhelp
     group: localhelp
     mode: "0644"
+
+- name: import database schema
+  become: true
+  community.mysql.mysql_db:
+    login_user: "{{ login_user }}"
+    login_password: "{{ login_password }}"
+    login_host: "{{ login_host }}"
+    target: "/opt/localhelp/backend/init.sql"
+    state: import
+    name: all
 
 
 - name: deploy systemd service
