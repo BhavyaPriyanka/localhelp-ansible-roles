@@ -10,7 +10,7 @@
 
 - name: Download frontend artifact
   ansible.builtin.get_url:
-    url: "http://{{ nexus_url }}/repository/{{ component }}/com/localhelp/{{ component }}/{{ app_version }}/{{ component }}-{{ app_version }}.zip"
+    url: "{{ nexus_url }}/repository/{{ component }}/com/localhelp/{{ component }}/{{ app_version }}/{{ component }}-{{ app_version }}.zip"
     dest: "{{ app_location }}/{{ component }}.zip"
 
 - name: Extract frontend artifact
