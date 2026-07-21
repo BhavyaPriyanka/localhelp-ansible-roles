@@ -1,29 +1,46 @@
 - name: Delete old app directory
+  become: true
   ansible.builtin.file:
     path: "{{ app_location }}"
     state: absent
 
 - name: Create app directory
+  become: true
   ansible.builtin.file:
     path: "{{ app_location }}"
     state: directory
+    owner: nginx
+    group: nginx
+    mode: '0755'
+
+- name: Install unzip package
+  become: true
+  ansible.builtin.package:
+    name: unzip
+    state: present
 
 - name: Download frontend artifact
+  become: true
   ansible.builtin.get_url:
     url: "{{ nexus_url }}/repository/{{ component }}/com/localhelp/{{ component }}/{{ app_version }}/{{ component }}-{{ app_version }}.zip"
     dest: "{{ app_location }}/{{ component }}.zip"
 
 - name: Extract frontend artifact
+  become: true
   ansible.builtin.unarchive:
     src: "{{ app_location }}/{{ component }}.zip"
     dest: "{{ app_location }}"
     remote_src: yes
 
-- name: Remove old frontend files
-  ansible.builtin.shell: rm -rf /usr/share/nginx/html/*
-
-- name: Copy frontend files
+- name: Copy frontend build files
+  become: true
   ansible.builtin.copy:
     src: "{{ app_location }}/build/"
-    dest: /usr/share/nginx/html/
+    dest: "{{ app_location }}/"
     remote_src: yes
+
+- name: Remove zip artifact
+  become: true
+  ansible.builtin.file:
+    path: "{{ app_location }}/{{ component }}.zip"
+    state: absent
